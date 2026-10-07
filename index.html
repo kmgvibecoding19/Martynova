@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Семейный бюджет</title>
+<style>
+:root{
+  --bg:#f4f6f9;--surface:#ffffff;--surface-2:#eef1f5;--text:#1a1f26;--muted:#5d6876;--border:#e1e5eb;
+  --accent:#3454d1;--accent-ink:#ffffff;--inc:#127a4b;--exp:#c2412b;--inc-soft:#e6f5ed;--exp-soft:#fcebe7;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.07);--radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1116;--surface:#161a20;--surface-2:#1f242c;--text:#e7eaee;--muted:#9ba6b3;--border:#2a313b;
+    --accent:#7d95ff;--accent-ink:#0b0f1a;--inc:#4cc38a;--exp:#ff7b65;--inc-soft:#13261d;--exp-soft:#2d1915;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+main.wrap{padding-top:16px;padding-bottom:96px;display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;min-width:0}
+.muted{color:var(--muted)}
+.hint{font-size:13px;color:var(--muted)}
+
+/* Шапка */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.topbar-in{display:flex;align-items:center;justify-content:space-between;gap:12px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:18px;flex:none}
+.brand-title{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-sub{font-size:12px;color:var(--muted)}
+.brand>div{min-width:0}
+.topbar-actions{display:flex;align-items:center;gap:8px;flex:none}
+.who{display:flex;align-items:center;gap:6px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;font-weight:650;font-size:13px;flex:none}
+
+/* Контролы */
+select,input{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-height:40px;min-width:0;width:100%}
+input[type=color]{padding:4px;width:44px;flex:none}
+input[aria-invalid=true]{border-color:var(--exp)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-weight:600;border:1px solid transparent;background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:8px 14px;min-height:40px;cursor:pointer;white-space:nowrap}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--border)}
+.btn.ghost:hover{background:var(--surface-2);filter:none}
+.btn.danger{background:var(--exp);color:#fff}
+.btn.sm{min-height:32px;padding:4px 10px;font-size:13px}
+.btn.icon{width:40px;padding:0;font-size:18px}
+.btn.link-danger{background:none;border:0;color:var(--exp);padding:4px 8px}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--surface-2);padding:4px;border-radius:12px}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:9px;cursor:pointer;min-height:34px}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed=true],.seg button[aria-selected=true]{background:var(--surface);color:var(--text);box-shadow:var(--shadow);font-weight:600}
+.field{display:grid;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+
+/* Фильтры */
+.filters{display:grid;gap:12px}
+.filter-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+.period-label{font-size:13px;color:var(--muted)}
+
+/* Сводка */
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.stat-label{font-size:13px;color:var(--muted);font-weight:500}
+.stat-val{font-size:clamp(22px,3vw,30px);font-weight:700;letter-spacing:-.01em;margin-top:4px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.inc{color:var(--inc)}.exp{color:var(--exp)}
+.stat-bal.pos{background:var(--inc-soft)}.stat-bal.pos .stat-val{color:var(--inc)}
+.stat-bal.neg{background:var(--exp-soft)}.stat-bal.neg .stat-val{color:var(--exp)}
+.progress{height:8px;border-radius:99px;background:var(--surface-2);margin-top:10px;overflow:hidden}
+.stat-bal .progress{background:var(--surface)}
+.progress>div{height:100%;width:0;background:var(--exp);border-radius:inherit;transition:width .3s}
+.stat-bal.pos .progress>div{background:var(--inc)}
+.stat-note{font-size:13px;color:var(--muted);margin-top:6px}
+.savings{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:12px 16px}
+.savings strong{font-size:18px;font-variant-numeric:tabular-nums}
+
+/* Итоги и график */
+.two{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.card-head h2{font-size:16px;margin:0}
+.totals{display:grid;gap:2px;max-height:430px;overflow:auto;margin:0 -8px;padding:0 4px}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:"name sum pct" "bar bar bar";gap:6px 10px;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-radius:10px;padding:8px;cursor:pointer}
+.trow:hover{background:var(--surface-2)}
+.trow[aria-pressed=true]{background:var(--surface-2);box-shadow:inset 0 0 0 2px var(--accent)}
+.tname{grid-area:name;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tsum{grid-area:sum;font-weight:600;font-variant-numeric:tabular-nums}
+.tpct{grid-area:pct;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.tbar{grid-area:bar;height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.trow:hover .tbar,.trow[aria-pressed=true] .tbar{background:var(--surface)}
+.tbar i{display:block;height:100%;border-radius:inherit}
+.totals-foot{display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:8px;padding-top:10px;font-size:14px}
+.chart-ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chart-ctrl select{width:auto;min-height:34px;padding:4px 8px;font-size:14px}
+.chart-wrap{position:relative}
+svg.chart{width:100%;height:auto;display:block;overflow:visible}
+.chart .grid{stroke:var(--border)}
+.chart .zero{stroke:var(--muted);stroke-opacity:.6}
+.chart text{fill:var(--muted);font-size:11px}
+.chart .b-inc{fill:var(--inc)}
+.chart .b-exp{fill:var(--exp)}
+.chart .line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+.chart .dot{fill:var(--surface);stroke:var(--accent);stroke-width:2}
+.chart .hit{fill:var(--text);fill-opacity:0;cursor:pointer;outline:none}
+.chart .hit.on{fill-opacity:.06}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap;margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend .l-line{height:3px;border-radius:2px;vertical-align:3px}
+.tip{position:absolute;top:6px;pointer-events:none;background:var(--surface);border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.16);border-radius:10px;padding:10px 12px;font-size:13px;min-width:210px;z-index:5;opacity:0;transition:opacity .12s}
+.tip.show{opacity:1}
+.tip h4{margin:0 0 6px;font-size:13px}
+.tip .r{display:flex;justify-content:space-between;gap:16px;font-variant-numeric:tabular-nums}
+.tip .d{color:var(--muted);font-size:12px;margin-top:2px}
+
+/* Форма добавления */
+.add-form{display:grid;grid-template-columns:auto minmax(0,1.1fr) minmax(0,1.4fr) minmax(0,2fr) minmax(0,1fr) auto;gap:10px;align-items:end}
+.add-form .btn{min-height:40px}
+.form-err{color:var(--exp);font-size:13px;min-height:18px;margin-top:6px}
+.type-toggle .seg button{min-height:32px}
+
+/* Таблица */
+.table-wrap{overflow-x:auto;margin:0 -16px;padding:0 16px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+th .sort{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-transform:inherit;letter-spacing:inherit}
+th .sort:hover{color:var(--text)}
+.c-amt{text-align:right;white-space:nowrap;font-weight:650}
+td.c-amt.income{color:var(--inc)}
+.c-date{white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--surface-2)}
+.chip{display:inline-flex;align-items:center;gap:6px}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+.c-desc{color:var(--muted);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-act{white-space:nowrap;text-align:right;width:1%}
+.c-act button{background:none;border:0;cursor:pointer;padding:6px;border-radius:8px;font-size:15px;color:inherit}
+.c-act button:hover{background:var(--surface)}
+.sub{font-size:12px;color:var(--muted);margin-top:2px}
+.m-only{display:none}
+.table-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.table-total{font-weight:600;font-variant-numeric:tabular-nums}
+.empty{text-align:center;color:var(--muted);padding:28px 8px}
+.tabs-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+
+/* Диалоги */
+dialog{border:1px solid var(--border);border-radius:16px;background:var(--surface);color:var(--text);padding:0;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(10,14,20,.55)}
+#settingsDlg{width:min(760px,calc(100vw - 32px))}
+.dlg{padding:20px;display:grid;gap:14px}
+.dlg h2{margin:0;font-size:19px}
+.dlg h3{margin:0 0 8px;font-size:15px}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.dlg-actions .spacer{flex:1}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.set-sec{border-top:1px solid var(--border);padding-top:14px}
+.clist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.citem{display:flex;align-items:center;gap:8px}
+.citem.is-hidden .cname,.citem.is-hidden .cemoji{opacity:.45}
+.cemoji{width:28px;text-align:center;flex:none}
+.cname{flex:1;min-width:0}
+.cemoji-in{width:52px;flex:none;text-align:center}
+.badge{font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:1px 8px;white-space:nowrap}
+.cadd{display:flex;gap:8px;margin-top:10px}
+.cadd input[name=emoji]{width:52px;flex:none;text-align:center}
+.invite{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.invite code{background:var(--surface-2);padding:6px 10px;border-radius:8px;font-size:14px}
+.members{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px}
+.members li{display:flex;align-items:center;gap:8px}
+
+/* Тост и FAB */
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;z-index:60;max-width:calc(100vw - 32px);font-size:14px}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.fab{position:fixed;right:16px;bottom:16px;width:56px;height:56px;border-radius:50%;font-size:28px;line-height:1;display:none;place-items:center;padding:0;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:30}
+
+@media (max-width:1000px){
+  .add-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .add-form .type-toggle,.add-form .f-desc,.add-form .btn{grid-column:1/-1}
+}
+@media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){.fab{display:grid}}
+@media (max-width:640px){
+  .summary{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+  .stat-bal{grid-column:1/-1}
+  .brand-sub{display:none}
+  .who select{max-width:120px}
+  .c-desc,.c-who{display:none}
+  .m-only{display:block}
+  .c-act button{padding:4px}
+  th,td{padding:10px 6px}
+  .grid2{grid-template-columns:1fr}
+  .filter-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">₸</span>
+      <div><div class="brand-title" id="familyName">Семья</div><div class="brand-sub">Семейный трекер расходов</div></div>
+    </div>
+    <div class="topbar-actions">
+      <label class="who">
+        <span class="avatar" id="avatar" aria-hidden="true">?</span>
+        <select id="memberSwitch" aria-label="Кто сейчас вносит записи"></select>
+      </label>
+      <button class="btn ghost icon" id="openSettings" aria-label="Настройки семьи" title="Настройки семьи">⚙</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Фильтр периода -->
+  <section class="card filters" aria-label="Фильтры">
+    <div class="seg" role="group" aria-label="Период" id="presets">
+      <button type="button" data-p="month">Этот месяц</button>
+      <button type="button" data-p="prev">Прошлый месяц</button>
+      <button type="button" data-p="3m">3 месяца</button>
+      <button type="button" data-p="year">Этот год</button>
+      <button type="button" data-p="custom">Свой период</button>
+    </div>
+    <div class="filter-row">
+      <label class="field">С<input type="date" id="fFrom"></label>
+      <label class="field">По<input type="date" id="fTo"></label>
+      <label class="field">Категория<select id="fCat"></select></label>
+      <label class="field">Кто<select id="fAuthor"></select></label>
+      <button type="button" class="btn ghost" id="resetFilters">Сбросить фильтры</button>
+    </div>
+    <div class="period-label" id="periodLabel"></div>
+  </section>
+
+  <!-- Остаток бюджета -->
+  <section class="summary" aria-label="Остаток бюджета за период">
+    <div class="card"><div class="stat-label">Доходы</div><div class="stat-val inc" id="sInc">0 ₸</div></div>
+    <div class="card"><div class="stat-label">Расходы</div><div class="stat-val exp" id="sExp">0 ₸</div></div>
+    <div class="card stat-bal" id="balCard">
+      <div class="stat-label">Остаток</div>
+      <div class="stat-val" id="sBal">0 ₸</div>
+      <div class="progress" role="progressbar" aria-label="Доля потраченного дохода" aria-valuemin="0" aria-valuemax="100" id="spentBar"><div id="spentFill"></div></div>
+      <div class="stat-note" id="spentText"></div>
+    </div>
+  </section>
+  <div class="card savings">
+    <span>Всего накоплено:</span><strong id="sCum">0 ₸</strong>
+    <span class="hint" id="cumNote"></span>
+  </div>
+
+  <!-- Итоги и динамика -->
+  <div class="two">
+    <section class="card" aria-labelledby="totTitle">
+      <div class="card-head"><h2 id="totTitle">Итоги по категориям</h2><span class="hint">клик — фильтр таблицы</span></div>
+      <div class="totals" id="totals"></div>
+      <div class="totals-foot" id="totalsFoot"></div>
+    </section>
+    <section class="card" aria-labelledby="chartTitle">
+      <div class="card-head">
+        <h2 id="chartTitle">Динамика по месяцам</h2>
+        <div class="chart-ctrl">
+          <select id="chartCat" aria-label="Категория для динамики"></select>
+          <div class="seg" role="group" aria-label="Число месяцев" id="chartMonths">
+            <button type="button" data-n="6">6 мес</button><button type="button" data-n="12">12 мес</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap" id="chartWrap">
+        <div id="chart"></div>
+        <div class="tip" id="tip" role="status" aria-live="polite"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </section>
+  </div>
+
+  <!-- Форма добавления -->
+  <section class="card" aria-label="Добавить операцию" id="addCard">
+    <form class="add-form" id="addForm" novalidate>
+      <div class="field type-toggle"><span>Тип</span>
+        <div class="seg" role="group" aria-label="Тип операции" id="typeToggle">
+          <button type="button" data-t="expense">Расход</button><button type="button" data-t="income">Доход</button>
+        </div>
+      </div>
+      <label class="field">Сумма, ₸<input id="aAmount" inputmode="decimal" autocomplete="off" placeholder="0" required></label>
+      <label class="field"><span id="aCatLabel">Категория</span><select id="aCat" required></select></label>
+      <label class="field f-desc">Описание<input id="aDesc" maxlength="200" autocomplete="off" placeholder="Необязательно"></label>
+      <label class="field">Дата<input type="date" id="aDate" required></label>
+      <button class="btn" type="submit" id="aSubmit">Добавить</button>
+    </form>
+    <div class="form-err" id="aErr" role="alert"></div>
+    <div class="hint">Переводы между членами семьи и между своими счетами не вносите — это не доход и не расход.</div>
+  </section>
+
+  <!-- Таблица -->
+  <section class="card" aria-label="Операции">
+    <div class="tabs-row">
+      <div class="seg" role="tablist" aria-label="Тип операций" id="tabs">
+        <button type="button" role="tab" data-tab="expense">Расходы</button>
+        <button type="button" role="tab" data-tab="income">Доходы</button>
+        <button type="button" role="tab" data-tab="all">Все</button>
+      </div>
+      <span class="hint" id="rowCount"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th><button class="sort" data-sort="date" type="button">Дата</button></th>
+          <th class="c-amt"><button class="sort" data-sort="amount" type="button">Сумма</button></th>
+          <th id="thCat">Категория</th>
+          <th class="c-desc">Описание</th>
+          <th class="c-who">Кто</th>
+          <th class="c-act"><span class="sr-only">Действия</span></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="table-foot">
+      <button type="button" class="btn ghost" id="moreBtn" hidden>Показать ещё</button>
+      <div class="table-total" id="tableTotal"></div>
+    </div>
+  </section>
+</main>
+
+<button class="btn fab" id="fab" aria-label="Добавить операцию">+</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Приветствие / создание семьи -->
+<dialog id="welcomeDlg" aria-labelledby="wTitle">
+  <form class="dlg" id="welcomeForm">
+    <h2 id="wTitle">Семейный трекер расходов</h2>
+    <p class="muted" style="margin:0">Создайте семейное пространство: вы станете его владельцем и сможете добавить остальных участников.</p>
+    <label class="field">Название семьи<input id="wFamily" required maxlength="60" placeholder="Например, Семья Ахметовых"></label>
+    <label class="field">Ваше имя<input id="wName" required maxlength="40" placeholder="Например, Айгерим"></label>
+    <label class="field">Начальный остаток, ₸ (деньги, которые уже есть)<input id="wOpening" inputmode="decimal" placeholder="0"></label>
+    <div class="form-err" id="wErr" role="alert"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn ghost" id="demoBtn">Открыть с демо-данными</button>
+      <button type="submit" class="btn">Создать семью</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Редактирование -->
+<dialog id="editDlg" aria-labelledby="eTitle">
+  <form class="dlg" id="editForm" novalidate>
+    <h2 id="eTitle">Редактировать</h2>
+    <div class="hint" id="eMeta"></div>
+    <div class="grid2">
+      <label class="field">Сумма, ₸<input id="eAmount" inputmode="decimal" required></label>
+      <label class="field">Дата<input type="date" id="eDate" required></label>
+    </div>
+    <label class="field"><span id="eCatLabel">Категория</span><select id="eCat"></select></label>
+    <label class="field">Описание<input id="eDesc" maxlength="200"></label>
+    <div class="form-err" id="eErr" role="alert"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn link-danger" id="eDelete">Удалить</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="eCancel">Отмена</button>
+      <button type="submit" class="btn">Сохранить</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Подтверждение -->
+<dialog id="confirmDlg">
+  <form class="dlg" method="dialog">
+    <h2 id="confirmTitle">Вы уверены?</h2>
+    <p id="confirmText" style="margin:0"></p>
+    <div class="dlg-actions">
+      <button value="cancel" class="btn ghost">Отмена</button>
+      <button value="ok" class="btn danger" id="confirmOk">Удалить</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Настройки -->
+<dialog id="settingsDlg" aria-labelledby="sTitle">
+  <div class="dlg">
+    <div class="dlg-actions" style="justify-content:space-between"><h2 id="sTitle">Настройки семьи</h2><button class="btn ghost icon" id="closeSettings" aria-label="Закрыть">✕</button></div>
+    <div id="settingsBody" class="dlg" style="padding:0"></div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+
+const LS_KEY = 'family-budget-v1';
+const DEFAULT_EXP = [['Продукты','🛒','#3fa36b'],['Кафе и рестораны','☕','#e0874f'],['Транспорт','🚌','#4a8bd6'],['Жильё и ЖКУ','🏠','#8a68c7'],['Связь и интернет','📶','#22a9b6'],['Здоровье','💊','#dd5566'],['Одежда','👕','#c39a1d'],['Дети','🧸','#e77fa8'],['Развлечения','🎬','#6676de'],['Подарки','🎁','#c96d36'],['Подписки','🔁','#7a8796'],['Прочее','📦','#9aa0a6']];
+const DEFAULT_INC = [['Зарплата','💼','#1a9b62'],['Подработка','🛠','#3d8fe0'],['Пособия и выплаты','🏛','#8a68c7'],['Проценты и кэшбэк','💳','#c39a1d'],['Подарки','🎁','#c96d36'],['Прочее','📦','#9aa0a6']];
+const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MONTHS_SHORT = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const PAGE = 50;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today = () => ymd(new Date());
+const fmtDate = s => { const [y,m,d] = s.split('-'); return d+'.'+m+'.'+y; };
+const uid = () => Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+const nf0 = new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0});
+const nf2 = new Intl.NumberFormat('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+function money(v, signed){
+  const cents = Math.round(v*100), a = Math.abs(cents);
+  const s = (a % 100 ? nf2 : nf0).format(a/100);
+  let sign = cents < 0 ? '−' : '';
+  if (signed && cents > 0) sign = '+';
+  return sign + s + ' ₸';
+}
+function fmtShort(v){
+  const a = Math.abs(v), s = v < 0 ? '−' : '';
+  if (a >= 1e6) return s + (a/1e6).toLocaleString('ru-RU',{maximumFractionDigits:1}) + ' млн';
+  if (a >= 1e3) return s + Math.round(a/1e3) + ' тыс';
+  return s + Math.round(a);
+}
+function parseAmount(raw, allowZero){
+  const s = String(raw).replace(/[\s ]/g,'').replace(',','.');
+  if (!/^\d+(\.\d{1,2})?$/.test(s)) return null;
+  const v = parseFloat(s);
+  if (v > 1e11) return null;
+  return (v > 0 || (allowZero && v === 0)) ? v : null;
+}
+const amountToInput = v => String(v).replace('.',',');
+const inviteCode = () => 'FAM-' + Math.random().toString(36).slice(2,8).toUpperCase();
+
+/* ---------- Данные ---------- */
+const mkCats = list => list.map(([name,emoji,color]) => ({id:uid(),name,emoji,color,isDefault:true,isHidden:false}));
+
+function newState(family, me, opening){
+  const ownerId = uid();
+  return {
+    v:1,
+    family:{name:family, openingBalance:opening||0, inviteCode:inviteCode()},
+    members:[{id:ownerId, name:me, role:'owner'}],
+    currentMemberId:ownerId,
+    cats:{expense:mkCats(DEFAULT_EXP), income:mkCats(DEFAULT_INC)},
+    ops:[]
+  };
+}
+
+function demoState(){
+  const s = newState('Наша семья','Айгерим',250000);
+  const erlan = {id:uid(), name:'Ерлан', role:'member'};
+  s.members.push(erlan);
+  const A = s.currentMemberId, E = erlan.id;
+  let seed = 20261007;
+  const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const R = (a,b) => a + Math.floor(rnd()*(b-a+1));
+  const pick = arr => arr[Math.floor(rnd()*arr.length)];
+  const cid = (type,name) => s.cats[type].find(c => c.name === name).id;
+  const now = new Date();
+  let t0 = Date.now() - 400*864e5;
+  for (let k = 11; k >= 0; k--){
+    const d0 = new Date(now.getFullYear(), now.getMonth()-k, 1);
+    const y = d0.getFullYear(), m = d0.getMonth();
+    const dim = new Date(y, m+1, 0).getDate();
+    const last = k === 0 ? now.getDate() : dim;
+    const add = (type, cat, amount, day, desc, by) => {
+      if (day > last) return;
+      s.ops.push({id:uid(), type, amount, catId:cid(type,cat), desc:desc||'', date:ymd(new Date(y,m,day)), by:by||pick([A,E]), createdAt:t0 += 1000});
+    };
+    const r10 = (a,b) => Math.round(R(a,b)/10)*10;
+    // Доходы
+    add('income','Зарплата',380000,5,'Зарплата',A);
+    add('income','Зарплата',320000,10,'Зарплата',E);
+    if (rnd() < .5) add('income','Подработка',r10(40000,90000),R(14,24),'Проект на фрилансе',E);
+    add('income','Проценты и кэшбэк',R(2500,9000)+.5,28,'Кэшбэк по карте',A);
+    if (m === 2 || m === 11) add('income','Подарки',r10(30000,60000),R(1,20),'Подарок от родителей',A);
+    // Расходы
+    add('expense','Жильё и ЖКУ',150000,3,'Ипотека',A);
+    add('expense','Жильё и ЖКУ',(m<3||m>9) ? r10(38000,46000) : r10(24000,32000),15,'Коммунальные услуги',A);
+    add('expense','Связь и интернет',12990,7,'Мобильная связь и интернет',E);
+    add('expense','Подписки',4990,12,'Музыка и кино',A);
+    for (let i = R(9,12); i--;) add('expense','Продукты',r10(6000,26000),R(1,dim),pick(['Magnum','Small','Рынок','Продукты на неделю','Хлеб, молоко','']));
+    for (let i = R(3,6); i--;) add('expense','Кафе и рестораны',r10(4000,18000),R(1,dim),pick(['Обед','Кофе','Ужин всей семьёй','Доставка']));
+    for (let i = R(6,10); i--;) add('expense','Транспорт',r10(1500,12000),R(1,dim),pick(['Такси','Бензин','Проезд','Парковка']));
+    for (let i = R(1,2); i--;) add('expense','Здоровье',r10(3000,25000),R(1,dim),pick(['Аптека','Анализы','Стоматолог']));
+    for (let i = R(2,3); i--;) add('expense','Дети',r10(5000,30000),R(1,dim),pick(['Кружок','Школьные принадлежности','Игрушки']));
+    if (rnd() < .5) add('expense','Одежда',r10(15000,60000),R(1,dim),pick(['Обувь','Куртка','Одежда детям']));
+    for (let i = R(1,3); i--;) add('expense','Развлечения',r10(5000,20000),R(1,dim),pick(['Кино','Боулинг','Аквапарк']));
+    if (rnd() < .3) add('expense','Подарки',r10(10000,40000),R(1,dim),'День рождения');
+    for (let i = R(1,2); i--;) add('expense','Прочее',r10(2000,10000),R(1,dim),pick(['Хозтовары','Ремонт мелочей','']));
+    if (k === 4) add('expense','Развлечения',420000,R(8,20),'Отпуск',A);
+  }
+  return s;
+}
+
+let state = null;
+function load(){
+  try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.v === 1 && Array.isArray(s.ops)) return s; } catch(e){}
+  return null;
+}
+function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e){} }
+
+/* ---------- Состояние интерфейса ---------- */
+const ui = {period:'month', from:'', to:'', cat:'', author:'', tab:'expense', sortKey:'date', sortDir:-1, limit:PAGE, chartMonths:12, chartCat:'', formType:'expense'};
+
+function periodRange(){
+  const n = new Date(), y = n.getFullYear(), m = n.getMonth();
+  const r = (a,b) => ({from:ymd(a), to:ymd(b)});
+  switch (ui.period){
+    case 'prev': return r(new Date(y,m-1,1), new Date(y,m,0));
+    case '3m':   return r(new Date(y,m-2,1), new Date(y,m+1,0));
+    case 'year': return r(new Date(y,0,1), new Date(y,11,31));
+    case 'custom': {
+      let f = ui.from || ymd(new Date(y,m,1)), t = ui.to || ymd(new Date(y,m+1,0));
+      if (f > t) [f,t] = [t,f];
+      return {from:f, to:t};
+    }
+    default: return r(new Date(y,m,1), new Date(y,m+1,0));
+  }
+}
+const inRange = (o,r) => o.date >= r.from && o.date <= r.to;
+const catOf = (type,id) => state.cats[type].find(c => c.id === id) || {name:'—', emoji:'❔', color:'#999'};
+const memberName = id => (state.members.find(m => m.id === id) || {name:'—'}).name;
+const sum = list => list.reduce((a,o) => a + o.amount, 0);
+const parseKey = k => { const i = k.indexOf(':'); return {type:k.slice(0,i), id:k.slice(i+1)}; };
+
+/* ---------- Рендер ---------- */
+function render(){
+  if (!state) return;
+  renderHeader(); renderFilters(); renderSummary(); renderTotals(); renderChart(); renderForm(); renderTable();
+}
+
+function renderHeader(){
+  $('#familyName').textContent = state.family.name;
+  document.title = state.family.name + ' · Семейный бюджет';
+  $('#memberSwitch').innerHTML = state.members.map(m => `<option value="${m.id}">${esc(m.name)}${m.role==='owner'?' (владелец)':''}</option>`).join('');
+  $('#memberSwitch').value = state.currentMemberId;
+  $('#avatar').textContent = (memberName(state.currentMemberId)[0] || '?').toUpperCase();
+}
+
+function catOptions(type, onlyVisible, selected){
+  return state.cats[type].filter(c => !onlyVisible || !c.isHidden || c.id === selected)
+    .map(c => `<option value="${c.id}">${c.emoji} ${esc(c.name)}</option>`).join('');
+}
+
+function renderFilters(){
+  const r = periodRange();
+  document.querySelectorAll('#presets button').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === ui.period));
+  $('#fFrom').value = r.from; $('#fTo').value = r.to;
+  const grp = (type,label) => `<optgroup label="${label}">` + state.cats[type].map(c => `<option value="${type}:${c.id}">${c.emoji} ${esc(c.name)}</option>`).join('') + '</optgroup>';
+  $('#fCat').innerHTML = '<option value="">Все категории</option>' + grp('expense','Расходы') + grp('income','Доходы');
+  $('#fCat').value = ui.cat;
+  $('#fAuthor').innerHTML = '<option value="">Все участники</option>' + state.members.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('');
+  $('#fAuthor').value = ui.author;
+  $('#periodLabel').textContent = 'Период: ' + fmtDate(r.from) + ' — ' + fmtDate(r.to);
+}
+
+function renderSummary(){
+  const r = periodRange();
+  const list = state.ops.filter(o => inRange(o,r));
+  const inc = sum(list.filter(o => o.type === 'income'));
+  const exp = sum(list.filter(o => o.type === 'expense'));
+  const bal = inc - exp;
+  $('#sInc').textContent = money(inc);
+  $('#sExp').textContent = money(exp);
+  $('#sBal').textContent = money(bal, true);
+  const card = $('#balCard');
+  card.classList.toggle('pos', Math.round(bal*100) > 0);
+  card.classList.toggle('neg', Math.round(bal*100) < 0);
+  const pct = inc > 0 ? exp/inc*100 : (exp > 0 ? 100 : 0);
+  $('#spentFill').style.width = Math.min(100,pct) + '%';
+  $('#spentBar').setAttribute('aria-valuenow', Math.round(Math.min(100,pct)));
+  $('#spentText').textContent = inc > 0 ? `Потрачено ${Math.round(pct)}% дохода` + (bal < 0 ? ' — расходы превысили доходы' : '')
+    : exp > 0 ? 'Доходов за период нет' : 'Операций за период нет';
+  const all = state.ops;
+  const cum = state.family.openingBalance + sum(all.filter(o => o.type === 'income')) - sum(all.filter(o => o.type === 'expense'));
+  const cumEl = $('#sCum');
+  cumEl.textContent = money(cum);
+  cumEl.style.color = cum < 0 ? 'var(--exp)' : '';
+  $('#cumNote').textContent = 'с начала учёта, включая начальный остаток ' + money(state.family.openingBalance) + '; не зависит от периода';
+}
+
+function renderTotals(){
+  const type = ui.tab === 'income' ? 'income' : 'expense';
+  $('#totTitle').textContent = type === 'income' ? 'Итоги по источникам' : 'Итоги по категориям';
+  const r = periodRange();
+  const list = state.ops.filter(o => o.type === type && inRange(o,r) && (!ui.author || o.by === ui.author));
+  const total = sum(list);
+  const by = new Map();
+  list.forEach(o => by.set(o.catId, (by.get(o.catId) || 0) + o.amount));
+  const rows = [...by.entries()].sort((a,b) => b[1] - a[1]);
+  if (!rows.length){
+    $('#totals').innerHTML = `<div class="empty">${type === 'income' ? 'Доходов' : 'Расходов'} за период нет</div>`;
+    $('#totalsFoot').innerHTML = '';
+    return;
+  }
+  $('#totals').innerHTML = rows.map(([id,v]) => {
+    const c = catOf(type,id), p = v/total*100, key = type+':'+id;
+    const pTxt = p > 0 && p < .5 ? '<1%' : Math.round(p) + '%';
+    return `<button type="button" class="trow" data-key="${key}" aria-pressed="${ui.cat === key}" title="Показать в таблице только «${esc(c.name)}»">
+      <span class="tname">${c.emoji} ${esc(c.name)}</span><span class="tsum">${money(v)}</span><span class="tpct">${pTxt}</span>
+      <span class="tbar"><i style="width:${p}%;background:${c.color}"></i></span></button>`;
+  }).join('');
+  $('#totalsFoot').innerHTML = `<span class="muted">Всего за период</span><strong>${money(total)}</strong>`;
+}
+
+/* ---------- График ---------- */
+let chartData = null;
+function niceNum(x){
+  if (x <= 0) return 1;
+  const e = Math.pow(10, Math.floor(Math.log10(x))), f = x/e;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e;
+}
+function renderChart(){
+  const sel = $('#chartCat');
+  sel.innerHTML = '<option value="">Доходы и расходы</option><optgroup label="Расходы по категории">' + catOptions('expense', false) + '</optgroup>';
+  if (ui.chartCat && !state.cats.expense.some(c => c.id === ui.chartCat)) ui.chartCat = '';
+  sel.value = ui.chartCat;
+  document.querySelectorAll('#chartMonths button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === ui.chartMonths));
+
+  const N = ui.chartMonths, now = new Date();
+  const months = [];
+  for (let k = N; k >= 0; k--){ const d = new Date(now.getFullYear(), now.getMonth()-k, 1); months.push({y:d.getFullYear(), m:d.getMonth(), key:d.getFullYear()+'-'+pad(d.getMonth()+1), inc:0, exp:0}); }
+  const idx = new Map(months.map((x,i) => [x.key,i]));
+  state.ops.forEach(o => {
+    const i = idx.get(o.date.slice(0,7));
+    if (i === undefined) return;
+    if (o.type === 'income') months[i].inc += o.amount;
+    else if (!ui.chartCat || o.catId === ui.chartCat) months[i].exp += o.amount;
+  });
+  months.forEach(x => x.bal = x.inc - x.exp);
+  const onlyExp = !!ui.chartCat;
+  chartData = {months, onlyExp};
+  const shown = months.slice(1);
+
+  const W = 680, H = 280, ml = 58, mr = 10, mt = 12, mb = 28, pw = W-ml-mr, ph = H-mt-mb;
+  const vals = shown.flatMap(x => onlyExp ? [x.exp] : [x.inc, x.exp, x.bal]);
+  let maxV = Math.max(0, ...vals), minV = Math.min(0, ...vals);
+  if (maxV === minV) maxV = 1000;
+  const step = niceNum((maxV-minV)/4);
+  const lo = Math.floor(minV/step)*step, hi = Math.ceil(maxV/step)*step;
+  const y = v => mt + (hi - v)/(hi - lo)*ph;
+  const gw = pw/N, bw = Math.min(22, gw*.32);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Столбчатая диаграмма доходов и расходов по месяцам">`;
+  for (let t = lo; t <= hi + step/2; t += step){
+    s += `<line class="${Math.abs(t) < step/1e6 ? 'zero' : 'grid'}" x1="${ml}" x2="${W-mr}" y1="${y(t)}" y2="${y(t)}"/>`;
+    s += `<text x="${ml-8}" y="${y(t)+4}" text-anchor="end">${fmtShort(t)}</text>`;
+  }
+  const bar = (cls,x,v) => { const top = y(Math.max(v,0)), h = Math.abs(y(v) - y(0)); return h > 0 ? `<rect class="${cls}" x="${x}" y="${top}" width="${bw}" height="${h}" rx="3"/>` : ''; };
+  shown.forEach((x,i) => {
+    const cx = ml + gw*i + gw/2;
+    if (onlyExp) s += bar('b-exp', cx - bw/2, x.exp);
+    else { s += bar('b-inc', cx - bw - 1, x.inc); s += bar('b-exp', cx + 1, x.exp); }
+    const lbl = MONTHS_SHORT[x.m] + (x.m === 0 || i === 0 ? ' ’' + String(x.y).slice(2) : '');
+    s += `<text x="${cx}" y="${H-8}" text-anchor="middle">${lbl}</text>`;
+  });
+  if (!onlyExp){
+    const pts = shown.map((x,i) => [ml + gw*i + gw/2, y(x.bal)]);
+    s += `<polyline class="line" points="${pts.map(p => p.join(',')).join(' ')}"/>`;
+    s += pts.map(p => `<circle class="dot" cx="${p[0]}" cy="${p[1]}" r="3.5"/>`).join('');
+  }
+  shown.forEach((x,i) => {
+    s += `<rect class="hit" data-i="${i+1}" x="${ml+gw*i}" y="${mt}" width="${gw}" height="${ph}" tabindex="0" aria-label="${MONTHS[x.m]} ${x.y}: ${onlyExp ? 'расходы ' + money(x.exp) : 'доходы ' + money(x.inc) + ', расходы ' + money(x.exp) + ', остаток ' + money(x.bal,true)}"/>`;
+  });
+  s += '</svg>';
+  $('#chart').innerHTML = s;
+  hideTip();
+  const cat = onlyExp ? catOf('expense', ui.chartCat) : null;
+  $('#legend').innerHTML = onlyExp
+    ? `<span><i style="background:var(--exp)"></i>Расходы: ${cat.emoji} ${esc(cat.name)}</span>`
+    : `<span><i style="background:var(--inc)"></i>Доходы</span><span><i style="background:var(--exp)"></i>Расходы</span><span><i class="l-line" style="background:var(--accent);width:16px"></i>Остаток</span>`;
+}
+
+function changeLine(cur, prev){
+  if (!prev) return '<div class="d">к прошлому месяцу: нет данных</div>';
+  const d = cur - prev, p = d/prev*100;
+  return `<div class="d">к прошлому месяцу: ${d >= 0 ? '+' : '−'}${Math.abs(p).toFixed(0)}% (${money(d,true)})</div>`;
+}
+function showTip(hit){
+  const i = +hit.dataset.i, {months, onlyExp} = chartData, x = months[i], p = months[i-1];
+  document.querySelectorAll('.chart .hit.on').forEach(h => h.classList.remove('on'));
+  hit.classList.add('on');
+  const tip = $('#tip');
+  tip.innerHTML = `<h4>${MONTHS[x.m]} ${x.y}</h4>` + (onlyExp
+    ? `<div class="r"><span>Расходы</span><strong class="exp">${money(x.exp)}</strong></div>${changeLine(x.exp,p.exp)}`
+    : `<div class="r"><span>Доходы</span><strong class="inc">${money(x.inc)}</strong></div>${changeLine(x.inc,p.inc)}
+       <div class="r" style="margin-top:6px"><span>Расходы</span><strong class="exp">${money(x.exp)}</strong></div>${changeLine(x.exp,p.exp)}
+       <div class="r" style="margin-top:6px"><span>Остаток</span><strong>${money(x.bal,true)}</strong></div>`);
+  const wrap = $('#chartWrap').getBoundingClientRect(), r = hit.getBoundingClientRect();
+  const cx = r.left - wrap.left + r.width/2;
+  let left = cx > wrap.width/2 ? r.left - wrap.left - tip.offsetWidth - 4 : r.right - wrap.left + 4;
+  left = Math.max(0, Math.min(wrap.width - tip.offsetWidth, left));
+  tip.style.left = left + 'px';
+  tip.classList.add('show');
+}
+function hideTip(){
+  $('#tip').classList.remove('show');
+  document.querySelectorAll('.chart .hit.on').forEach(h => h.classList.remove('on'));
+}
+
+/* ---------- Форма ---------- */
+function renderForm(){
+  const t = ui.formType;
+  document.querySelectorAll('#typeToggle button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === t));
+  $('#aCatLabel').textContent = t === 'income' ? 'Источник' : 'Категория';
+  const sel = $('#aCat'), prev = sel.value;
+  sel.innerHTML = catOptions(t, true);
+  if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
+  $('#aSubmit').textContent = t === 'income' ? 'Добавить доход' : 'Добавить расход';
+  if (!$('#aDate').value) $('#aDate').value = today();
+}
+
+/* ---------- Таблица ---------- */
+function tableRows(){
+  const r = periodRange(), f = ui.cat ? parseKey(ui.cat) : null;
+  const rows = state.ops.filter(o => inRange(o,r) && (ui.tab === 'all' || o.type === ui.tab)
+    && (!f || (o.type === f.type && o.catId === f.id)) && (!ui.author || o.by === ui.author));
+  const d = ui.sortDir;
+  rows.sort(ui.sortKey === 'amount'
+    ? (a,b) => (a.amount - b.amount)*d || (b.date < a.date ? -1 : 1)
+    : (a,b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.createdAt - b.createdAt)*d);
+  return rows;
+}
+function renderTable(){
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === ui.tab));
+  $('#thCat').textContent = ui.tab === 'income' ? 'Источник' : ui.tab === 'all' ? 'Категория / источник' : 'Категория';
+  document.querySelectorAll('th .sort').forEach(b => {
+    const on = b.dataset.sort === ui.sortKey;
+    b.textContent = (b.dataset.sort === 'date' ? 'Дата' : 'Сумма') + (on ? (ui.sortDir < 0 ? ' ↓' : ' ↑') : '');
+    b.closest('th').setAttribute('aria-sort', on ? (ui.sortDir < 0 ? 'descending' : 'ascending') : 'none');
+  });
+  const rows = tableRows(), vis = rows.slice(0, ui.limit);
+  const tb = $('#tbody');
+  if (!rows.length){
+    tb.innerHTML = `<tr><td colspan="6" class="empty">Нет операций за выбранный период${ui.cat || ui.author ? ' с такими фильтрами' : ''}</td></tr>`;
+  } else {
+    tb.innerHTML = vis.map(o => {
+      const c = catOf(o.type, o.catId), who = memberName(o.by);
+      const amt = ui.tab === 'all' ? money(o.type === 'income' ? o.amount : -o.amount, true) : money(o.amount);
+      return `<tr data-id="${o.id}" tabindex="0" aria-label="${fmtDate(o.date)}, ${amt}, ${esc(c.name)}. Enter — редактировать">
+        <td class="c-date">${fmtDate(o.date)}</td>
+        <td class="c-amt ${o.type}">${amt}</td>
+        <td><span class="chip" style="--c:${c.color}">${c.emoji} ${esc(c.name)}</span><div class="sub m-only">${esc([o.desc, who].filter(Boolean).join(' · '))}</div></td>
+        <td class="c-desc" title="${esc(o.desc)}">${esc(o.desc) || '—'}</td>
+        <td class="c-who">${esc(who)}</td>
+        <td class="c-act"><button type="button" data-act="edit" aria-label="Редактировать" title="Редактировать">✏️</button><button type="button" data-act="del" aria-label="Удалить" title="Удалить">🗑</button></td>
+      </tr>`;
+    }).join('');
+  }
+  const more = $('#moreBtn');
+  more.hidden = rows.length <= ui.limit;
+  more.textContent = `Показать ещё (${Math.min(PAGE, rows.length - ui.limit)} из ${rows.length - ui.limit})`;
+  $('#rowCount').textContent = rows.length ? `Показано ${vis.length} из ${rows.length}` : '';
+  const inc = sum(rows.filter(o => o.type === 'income')), exp = sum(rows.filter(o => o.type === 'expense'));
+  $('#tableTotal').innerHTML = ui.tab === 'expense' ? `Итого расходов: <span class="exp">${money(exp)}</span>`
+    : ui.tab === 'income' ? `Итого доходов: <span class="inc">${money(inc)}</span>`
+    : `<span class="inc">${money(inc,true)}</span> · <span class="exp">${money(-exp,true)}</span> · Остаток ${money(inc-exp,true)}`;
+}
+
+/* ---------- Утилиты UI ---------- */
+let toastT;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2800);
+}
+function confirmDialog(title, text, okLabel){
+  const d = $('#confirmDlg');
+  $('#confirmTitle').textContent = title;
+  $('#confirmText').textContent = text;
+  $('#confirmOk').textContent = okLabel || 'Удалить';
+  d.returnValue = '';
+  d.showModal();
+  return new Promise(res => d.addEventListener('close', () => res(d.returnValue === 'ok'), {once:true}));
+}
+function commit(){ save(); render(); }
+
+async function deleteOp(id){
+  const o = state.ops.find(x => x.id === id);
+  if (!o) return false;
+  const c = catOf(o.type, o.catId);
+  const ok = await confirmDialog(o.type === 'income' ? 'Удалить доход?' : 'Удалить расход?', `${fmtDate(o.date)} · ${money(o.amount)} · ${c.name}${o.desc ? ' · ' + o.desc : ''}`);
+  if (!ok) return false;
+  state.ops = state.ops.filter(x => x.id !== id);
+  commit(); toast('Запись удалена');
+  return true;
+}
+
+/* ---------- Редактирование ---------- */
+let editId = null;
+function openEdit(id){
+  const o = state.ops.find(x => x.id === id);
+  if (!o) return;
+  editId = id;
+  $('#eTitle').textContent = o.type === 'income' ? 'Редактировать доход' : 'Редактировать расход';
+  $('#eMeta').textContent = 'Добавил(а): ' + memberName(o.by);
+  $('#eCatLabel').textContent = o.type === 'income' ? 'Источник' : 'Категория';
+  $('#eAmount').value = amountToInput(o.amount);
+  $('#eAmount').removeAttribute('aria-invalid');
+  $('#eDate').value = o.date;
+  $('#eCat').innerHTML = catOptions(o.type, true, o.catId);
+  $('#eCat').value = o.catId;
+  $('#eDesc').value = o.desc;
+  $('#eErr').textContent = '';
+  $('#editDlg').showModal();
+  $('#eAmount').focus();
+}
+
+/* ---------- Настройки ---------- */
+function nameTaken(type, name, exceptId){
+  const n = name.trim().toLowerCase();
+  return state.cats[type].some(c => c.id !== exceptId && c.name.toLowerCase() === n);
+}
+function catListHTML(type){
+  return state.cats[type].map(c => c.isDefault
+    ? `<li class="citem ${c.isHidden ? 'is-hidden' : ''}"><span class="cemoji">${c.emoji}</span><span class="cname">${esc(c.name)}</span><span class="badge">готовая</span>
+        ${c.name === 'Прочее' ? '' : `<button type="button" class="btn ghost sm" data-action="toggle-hide" data-type="${type}" data-id="${c.id}">${c.isHidden ? 'Показать' : 'Скрыть'}</button>`}</li>`
+    : `<li class="citem"><input class="cemoji-in" maxlength="4" value="${esc(c.emoji)}" data-field="emoji" data-type="${type}" data-id="${c.id}" aria-label="Эмодзи">
+        <input class="cname" maxlength="40" value="${esc(c.name)}" data-field="name" data-type="${type}" data-id="${c.id}" aria-label="Название">
+        <input type="color" value="${c.color}" data-field="color" data-type="${type}" data-id="${c.id}" aria-label="Цвет">
+        <button type="button" class="btn link-danger sm" data-action="del-cat" data-type="${type}" data-id="${c.id}">Удалить</button></li>`).join('');
+}
+function renderSettings(){
+  const f = state.family;
+  const me = state.members.find(m => m.id === state.currentMemberId);
+  const isOwner = me && me.role === 'owner';
+  $('#settingsBody').innerHTML = `
+    <section>
+      <div class="grid2">
+        <label class="field">Название семьи<input id="setName" maxlength="60" value="${esc(f.name)}"></label>
+        <label class="field">Начальный остаток, ₸<input id="setOpening" inputmode="decimal" value="${amountToInput(f.openingBalance)}" ${isOwner ? '' : 'disabled title="Изменяет только владелец"'}></label>
+      </div>
+    </section>
+    <section class="set-sec">
+      <h3>Участники</h3>
+      <ul class="members">${state.members.map(m => `<li><span class="avatar">${esc((m.name[0]||'?').toUpperCase())}</span>${esc(m.name)} <span class="badge">${m.role === 'owner' ? 'владелец' : 'участник'}</span></li>`).join('')}</ul>
+      <div class="invite"><span class="hint">Код приглашения:</span><code>${esc(f.inviteCode)}</code>
+        <button type="button" class="btn ghost sm" data-action="copy-invite">Скопировать</button>
+        ${isOwner ? '<button type="button" class="btn ghost sm" data-action="regen-invite">Новый код</button>' : ''}</div>
+      <form class="cadd" id="addMember"><input name="name" maxlength="40" placeholder="Имя нового участника" required aria-label="Имя нового участника"><button class="btn">Добавить участника</button></form>
+      <p class="hint" style="margin:6px 0 0">В этой версии данные хранятся в браузере, поэтому участник добавляется вручную и выбирается в шапке сайта.</p>
+    </section>
+    <section class="set-sec">
+      <h3>Категории расходов</h3>
+      <ul class="clist">${catListHTML('expense')}</ul>
+      <form class="cadd" data-type="expense"><input name="emoji" maxlength="4" placeholder="🏷" aria-label="Эмодзи"><input name="name" maxlength="40" placeholder="Новая категория" required aria-label="Название категории"><input type="color" name="color" value="#5b8def" aria-label="Цвет"><button class="btn">Добавить</button></form>
+    </section>
+    <section class="set-sec">
+      <h3>Источники доходов</h3>
+      <ul class="clist">${catListHTML('income')}</ul>
+      <form class="cadd" data-type="income"><input name="emoji" maxlength="4" placeholder="🏷" aria-label="Эмодзи"><input name="name" maxlength="40" placeholder="Новый источник" required aria-label="Название источника"><input type="color" name="color" value="#2fa37a" aria-label="Цвет"><button class="btn">Добавить</button></form>
+    </section>
+    <section class="set-sec">
+      <h3>Данные</h3>
+      <p class="hint" style="margin:0 0 10px">Все записи сохраняются в этом браузере (localStorage). Операций: ${state.ops.length}.</p>
+      <div class="dlg-actions" style="justify-content:flex-start">
+        <button type="button" class="btn ghost" data-action="demo">Заменить демо-данными</button>
+        <button type="button" class="btn link-danger" data-action="wipe">Удалить все данные</button>
+      </div>
+    </section>`;
+}
+
+/* ---------- События ---------- */
+function bind(){
+  $('#presets').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.p === 'custom' && ui.period !== 'custom'){ const r = periodRange(); ui.from = r.from; ui.to = r.to; }
+    ui.period = b.dataset.p; ui.limit = PAGE; render();
+  });
+  ['#fFrom','#fTo'].forEach(s => $(s).addEventListener('change', () => {
+    ui.period = 'custom'; ui.from = $('#fFrom').value; ui.to = $('#fTo').value; ui.limit = PAGE; render();
+  }));
+  $('#fCat').addEventListener('change', e => {
+    ui.cat = e.target.value; ui.limit = PAGE;
+    if (ui.cat && ui.tab !== 'all') ui.tab = parseKey(ui.cat).type;
+    render();
+  });
+  $('#fAuthor').addEventListener('change', e => { ui.author = e.target.value; ui.limit = PAGE; render(); });
+  $('#resetFilters').addEventListener('click', () => { Object.assign(ui, {period:'month', cat:'', author:'', limit:PAGE}); render(); });
+
+  $('#totals').addEventListener('click', e => {
+    const b = e.target.closest('.trow'); if (!b) return;
+    ui.cat = ui.cat === b.dataset.key ? '' : b.dataset.key; ui.limit = PAGE; render();
+  });
+
+  $('#chartCat').addEventListener('change', e => { ui.chartCat = e.target.value; renderChart(); });
+  $('#chartMonths').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ ui.chartMonths = +b.dataset.n; renderChart(); } });
+  const chart = $('#chart');
+  chart.addEventListener('pointermove', e => { const h = e.target.closest('.hit'); if (h) showTip(h); });
+  chart.addEventListener('click', e => { const h = e.target.closest('.hit'); if (h) showTip(h); });
+  chart.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+  chart.addEventListener('focusin', e => { const h = e.target.closest('.hit'); if (h) showTip(h); });
+  chart.addEventListener('focusout', hideTip);
+
+  $('#typeToggle').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    ui.formType = b.dataset.t; renderForm(); $('#aAmount').focus();
+  });
+  $('#addForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const amtEl = $('#aAmount'), err = $('#aErr');
+    const amount = parseAmount(amtEl.value);
+    if (amount === null){
+      amtEl.setAttribute('aria-invalid','true');
+      err.textContent = 'Введите сумму больше нуля (не более 2 знаков после запятой).';
+      amtEl.focus(); return;
+    }
+    const catId = $('#aCat').value;
+    if (!catId){ err.textContent = 'Выберите ' + (ui.formType === 'income' ? 'источник.' : 'категорию.'); return; }
+    amtEl.removeAttribute('aria-invalid'); err.textContent = '';
+    const date = $('#aDate').value || today();
+    const op = {id:uid(), type:ui.formType, amount, catId, desc:$('#aDesc').value.trim().slice(0,200), date, by:state.currentMemberId, createdAt:Date.now()};
+    state.ops.push(op);
+    if (ui.tab !== 'all' && ui.tab !== op.type) ui.tab = op.type;
+    commit();
+    amtEl.value = ''; $('#aDesc').value = ''; amtEl.focus();
+    const r = periodRange();
+    toast((op.type === 'income' ? 'Доход ' : 'Расход ') + money(amount) + ' добавлен' + (inRange(op,r) ? '' : ' (дата вне выбранного периода)'));
+  });
+  $('#aAmount').addEventListener('input', e => { e.target.removeAttribute('aria-invalid'); $('#aErr').textContent = ''; });
+
+  $('#tabs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    ui.tab = b.dataset.tab; ui.limit = PAGE;
+    if (ui.cat && ui.tab !== 'all' && parseKey(ui.cat).type !== ui.tab) ui.cat = '';
+    render();
+  });
+  document.querySelectorAll('th .sort').forEach(b => b.addEventListener('click', () => {
+    if (ui.sortKey === b.dataset.sort) ui.sortDir *= -1; else { ui.sortKey = b.dataset.sort; ui.sortDir = -1; }
+    renderTable();
+  }));
+  $('#tbody').addEventListener('click', e => {
+    const tr = e.target.closest('tr[data-id]'); if (!tr) return;
+    const act = e.target.closest('[data-act]');
+    if (act && act.dataset.act === 'del') deleteOp(tr.dataset.id); else openEdit(tr.dataset.id);
+  });
+  $('#tbody').addEventListener('keydown', e => {
+    const tr = e.target.closest('tr[data-id]'); if (!tr || e.target !== tr) return;
+    if (e.key === 'Enter'){ e.preventDefault(); openEdit(tr.dataset.id); }
+    if (e.key === 'Delete'){ e.preventDefault(); deleteOp(tr.dataset.id); }
+  });
+  $('#moreBtn').addEventListener('click', () => { ui.limit += PAGE; renderTable(); });
+
+  $('#memberSwitch').addEventListener('change', e => { state.currentMemberId = e.target.value; commit(); toast('Теперь записи вносит: ' + memberName(e.target.value)); });
+  $('#fab').addEventListener('click', () => { $('#addCard').scrollIntoView({behavior:'smooth', block:'center'}); setTimeout(() => $('#aAmount').focus({preventScroll:true}), 300); });
+
+  // Редактирование
+  $('#eCancel').addEventListener('click', () => $('#editDlg').close());
+  $('#editForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const o = state.ops.find(x => x.id === editId); if (!o) return;
+    const amount = parseAmount($('#eAmount').value);
+    if (amount === null){ $('#eAmount').setAttribute('aria-invalid','true'); $('#eErr').textContent = 'Введите сумму больше нуля (не более 2 знаков после запятой).'; return; }
+    if (!$('#eDate').value){ $('#eErr').textContent = 'Укажите дату.'; return; }
+    Object.assign(o, {amount, date:$('#eDate').value, catId:$('#eCat').value, desc:$('#eDesc').value.trim().slice(0,200)});
+    $('#editDlg').close(); commit(); toast('Изменения сохранены');
+  });
+  $('#eDelete').addEventListener('click', async () => { if (await deleteOp(editId)) $('#editDlg').close(); });
+
+  // Приветствие
+  $('#welcomeDlg').addEventListener('cancel', e => e.preventDefault());
+  $('#welcomeForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const fam = $('#wFamily').value.trim(), name = $('#wName').value.trim();
+    const openRaw = $('#wOpening').value.trim();
+    const opening = openRaw ? parseAmount(openRaw, true) : 0;
+    if (!fam || !name){ $('#wErr').textContent = 'Укажите название семьи и ваше имя.'; return; }
+    if (opening === null){ $('#wErr').textContent = 'Начальный остаток — число не меньше нуля.'; return; }
+    state = newState(fam, name, opening); $('#welcomeDlg').close(); commit();
+    toast('Семья создана. Добавьте первую трату!'); $('#aAmount').focus();
+  });
+  $('#demoBtn').addEventListener('click', () => { state = demoState(); $('#welcomeDlg').close(); commit(); toast('Загружены демо-данные за 12 месяцев'); });
+
+  // Настройки
+  $('#openSettings').addEventListener('click', () => { renderSettings(); $('#settingsDlg').showModal(); });
+  $('#closeSettings').addEventListener('click', () => $('#settingsDlg').close());
+  const sb = $('#settingsBody');
+  sb.addEventListener('change', e => {
+    const el = e.target;
+    if (el.id === 'setName'){
+      const v = el.value.trim(); if (!v){ el.value = state.family.name; return; }
+      state.family.name = v; commit(); return;
+    }
+    if (el.id === 'setOpening'){
+      const v = parseAmount(el.value || '0', true);
+      if (v === null){ toast('Начальный остаток — число не меньше нуля'); el.value = amountToInput(state.family.openingBalance); return; }
+      state.family.openingBalance = v; commit(); toast('Начальный остаток обновлён'); return;
+    }
+    if (!el.dataset.field) return;
+    const c = state.cats[el.dataset.type].find(x => x.id === el.dataset.id); if (!c) return;
+    if (el.dataset.field === 'name'){
+      const v = el.value.trim();
+      if (!v || nameTaken(el.dataset.type, v, c.id)){ toast(v ? 'Такое название уже есть' : 'Название не может быть пустым'); el.value = c.name; return; }
+      c.name = v;
+    } else if (el.dataset.field === 'emoji') c.emoji = el.value.trim() || '🏷';
+    else c.color = el.value;
+    commit();
+  });
+  sb.addEventListener('submit', e => {
+    e.preventDefault();
+    const f = e.target;
+    if (f.id === 'addMember'){
+      const n = f.name.value.trim(); if (!n) return;
+      state.members.push({id:uid(), name:n, role:'member'}); commit(); renderSettings(); toast(n + ' добавлен(а) в семью'); return;
+    }
+    const type = f.dataset.type, name = f.elements.name.value.trim();
+    if (!name) return;
+    if (nameTaken(type, name)){ toast('Категория «' + name + '» уже есть'); f.elements.name.focus(); return; }
+    state.cats[type].push({id:uid(), name, emoji:f.elements.emoji.value.trim() || '🏷', color:f.elements.color.value, isDefault:false, isHidden:false});
+    commit(); renderSettings(); toast('Добавлено: ' + name);
+  });
+  sb.addEventListener('click', async e => {
+    const b = e.target.closest('[data-action]'); if (!b) return;
+    const a = b.dataset.action, type = b.dataset.type, id = b.dataset.id;
+    if (a === 'toggle-hide'){
+      const c = state.cats[type].find(x => x.id === id); c.isHidden = !c.isHidden; commit(); renderSettings();
+    } else if (a === 'del-cat'){
+      const c = state.cats[type].find(x => x.id === id);
+      const n = state.ops.filter(o => o.type === type && o.catId === id).length;
+      const ok = await confirmDialog('Удалить «' + c.name + '»?', n ? `В ней ${n} операций — они будут перенесены в «Прочее».` : 'Операций в ней нет.');
+      if (!ok) return;
+      const other = state.cats[type].find(x => x.isDefault && x.name === 'Прочее');
+      state.ops.forEach(o => { if (o.type === type && o.catId === id) o.catId = other.id; });
+      state.cats[type] = state.cats[type].filter(x => x.id !== id);
+      if (ui.cat === type + ':' + id) ui.cat = '';
+      if (ui.chartCat === id) ui.chartCat = '';
+      commit(); renderSettings(); toast('Категория удалена');
+    } else if (a === 'copy-invite'){
+      const text = `Присоединяйтесь к семье «${state.family.name}» в трекере расходов. Код: ${state.family.inviteCode}`;
+      try { await navigator.clipboard.writeText(text); toast('Приглашение скопировано'); } catch(_){ toast('Код: ' + state.family.inviteCode); }
+    } else if (a === 'regen-invite'){
+      state.family.inviteCode = inviteCode(); commit(); renderSettings(); toast('Старый код больше не действует');
+    } else if (a === 'demo'){
+      if (!await confirmDialog('Заменить демо-данными?', 'Все текущие записи, категории и участники будут заменены примером за 12 месяцев.', 'Заменить')) return;
+      state = demoState(); Object.assign(ui, {cat:'', author:'', chartCat:''}); commit(); renderSettings(); toast('Загружены демо-данные');
+    } else if (a === 'wipe'){
+      if (!await confirmDialog('Удалить все данные?', 'Все записи этой семьи будут удалены из браузера без возможности восстановления.')) return;
+      try { localStorage.removeItem(LS_KEY); } catch(_){}
+      state = null; Object.assign(ui, {cat:'', author:'', chartCat:''});
+      $('#settingsDlg').close(); $('#welcomeDlg').showModal();
+    }
+  });
+}
+
+/* ---------- Старт ---------- */
+bind();
+$('#aDate').value = today();
+state = load();
+if (state) render(); else $('#welcomeDlg').showModal();
+})();
+</script>
+</body>
+</html>
